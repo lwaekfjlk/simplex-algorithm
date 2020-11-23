@@ -1,10 +1,8 @@
 import numpy as np
 import random
 
-
-
 class Simplex_Table(object):
-    def __init__(self,ori_c,ori_A,ori_b,ori_res,var_limit_arr,cons_type_arr):  
+    def __init__(self,ori_c,ori_A,ori_b,ori_res,var_type_arr,cons_type_arr):  
         # constant variable used by var_status
         # NORMAL state means normal variable x
         # NINF   state means the x actually is replaced by (-x)
@@ -17,14 +15,14 @@ class Simplex_Table(object):
         self.var_status = np.full(self.ori_var_num,self.NORMAL)
         
         # change variable based on variable limitation
-        for i in range(len(var_limit_arr)):
+        for i in range(len(var_type_arr)):
             # if a variable has <= 0 limitation
-            if (var_limit_arr[i] == -1):
+            if (var_type_arr[i] == -1):
                 ori_A[:,i] = -ori_A[:,i]
                 ori_c[:,i] = -ori_c[:,i]
                 self.var_status[i] = self.NINF
             # if a variable has no limitation
-            if (var_limit_arr[i] == 0):
+            if (var_type_arr[i] == 0):
                 col_A = np.array(-ori_A[:,i]).reshape(-1,1)
                 col_c = np.array(-ori_c[:,i]).reshape(-1,1)
                 ori_A =  np.concatenate((ori_A, col_A),axis=1).reshape(constrain_num,-1)
@@ -49,16 +47,28 @@ class Simplex_Table(object):
         self.constrain_num = (self.A).shape[0]
         self.var_num = (self.A).shape[1]
 
-        print("modified target  matrix for c = \n{}".format(self.c))
-        print("modified constrain matrix for A = \n{}".format(self.A))
-        print("modified constrain matrix for b = \n{}".format(self.b))
-        print("recorded state for variables = \n{}".format(self.var_status))
+        print("\nSimplex Table Init...")
+        self.print_simplex_table([i for i in range(self.constrain_num)], [i+self.constrain_num for i in range(self.var_num-self.constrain_num)], self.A, np.empty(shape=(0,0)), c, np.empty(shape=(0,0)), b, res)
+        print("Variable Status...")
+        self.print_var_status(self.var_status)
+
+    def print_var_status(self, var_status):
+        for i in range(len(self.var_status)):
+            if (self.var_status[i] == self.NORMAL):
+                print("x{}".format(i),end="  ")
+            elif (self.var_status[i] == self.NINF):
+                print("-x{}".format(i),end="  ")
+            elif (self.var_status[i] == i):
+                print("x{}+".format(i),end="  ")
+            elif (self.var_status[i] > 0):
+                print("x{}-".format(i),end="  ")
+        print("\n")
 
     def print_simplex_table(self, base_list, null_list, A_b, A_n, c_b, c_n, b, res):
         # ===============
         print("+",end='')
         for i in range(len(base_list+null_list)+1):
-            print("======",end='')
+            print("------",end='')
         print("+",end='')
         print("\n",end='')
 
@@ -73,7 +83,7 @@ class Simplex_Table(object):
         # ===============
         print("+",end='')
         for i in range(len(base_list+null_list)+1):
-            print("======",end='')
+            print("------",end='')
         print("+",end='')
         print("\n",end='')
         
@@ -106,11 +116,9 @@ class Simplex_Table(object):
         # ===============
         print("+",end='')
         for i in range(len(base_list+null_list)+1):
-            print("======",end='')
+            print("------",end='')
         print("+",end='')
         print("\n",end='')        
-
-
 
     def split_matrix(self,mat,lista, listb):
         return mat[:,lista], mat[:,listb]
@@ -169,7 +177,8 @@ class Simplex_Table(object):
     def change_base(self, base_list, null_list, A_b, A_n, c_b, c_n, b):
         in_index  = self.find_in_index(c_n, null_list)
         out_index = self.find_out_index(A_n, b, in_index, null_list, base_list)
-        
+        print("IN={}, OUT={}".format(in_index, out_index))
+
         # find index in the list
         in_index_pos_in_null_list = null_list.index(in_index)
         out_index_pos_in_base_list = base_list.index(out_index)
@@ -196,16 +205,16 @@ class Simplex_Table(object):
             print("After transforming...")
             self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
 
-            print("Judging finished simplex or not...")
+            print("Judging finished simplex or not...  ",end="")
             end_of_simplex = self.decide_end_simplex_or_not(c_n)
             if (end_of_simplex == True): 
-                    print("That is it, finally end!")
+                    print("Finally End!")
                     break
             else:
-                print("We need to keep going!")
+                print("Keep Going!")
 
+            print("Changing base...  ",end="")
             base_list, null_list, A_b, A_n, c_b, c_n = self.change_base(base_list, null_list, A_b, A_n, c_b, c_n, b)
-            print("After changing base...")
             self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
         
         return base_list, null_list, A_b, A_n, c_b, c_n, b, res
@@ -228,10 +237,10 @@ class Simplex_Table(object):
         b   = self.b.copy()   
         res = 0
 
-        print("\nBegin 1nd Stage for simplex method!")
+        print("\n======1st Stage for Simplex Method======")
         base_list, null_list, A_b, A_n, c_b, c_n, b, res = self.simplex_loop(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
 
-        print("\nInitial point FOUND !")
+        print("\nInitial point FOUND!")
         self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
 
         # in the 1 stage of simplex method, we can find situation that can not find solution for simplex method
@@ -247,7 +256,7 @@ class Simplex_Table(object):
         self.A_b, self.A_n  = self.split_matrix(self.A, self.base_list, self.null_list)
         self.c_b, self.c_n  = self.split_matrix(self.c, self.base_list, self.null_list)
         
-        print("\nBegin 2nd Stage for simplex method!")
+        print("\n======2nd Stage for Simplex Method======")
         self.print_simplex_table(self.base_list, self.null_list, self.A_b, self.A_n, self.c_b, self.c_n, self.b, self.res)
 
         if (len(self.null_list) > 0):
@@ -257,7 +266,7 @@ class Simplex_Table(object):
             self.res = self.res - float(np.dot(np.dot(self.c_b, self.inv_matrix(self.A_b)) , self.b))
             self.b = np.dot(self.inv_matrix(self.A_b), self.b)
 
-        print("\nComplete, get final base...")
+        print("\nComplete, get final results!")
         self.print_simplex_table(self.base_list, self.null_list, self.A_b, self.A_n, self.c_b, self.c_n, self.b, self.res)
         
         self.handle_result(self.res_type, self.base_list, self.null_list, (self.b).reshape(-1), self.res, self.var_status)
