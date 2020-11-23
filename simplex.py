@@ -37,7 +37,8 @@ class Simplex_Table(object):
                 col_A[i][0] = 1
                 ori_A = np.concatenate((ori_A,col_A), axis=1).reshape(constrain_num,-1)
                 col_c = np.zeros(shape=(1,1))    
-                ori_c = np.concatenate((ori_c,col_c), axis=1).reshape(constrain_num,-1)
+                ori_c = np.concatenate((ori_c,col_c), axis=1).reshape(1,-1)
+                self.var_status = np.append(self.var_status, self.NORMAL)
 
         self.c = ori_c
         self.A = ori_A
@@ -48,7 +49,7 @@ class Simplex_Table(object):
         self.var_num = (self.A).shape[1]
 
         print("\nSimplex Table Init...")
-        self.print_simplex_table([i for i in range(self.constrain_num)], [i+self.constrain_num for i in range(self.var_num-self.constrain_num)], self.A, np.empty(shape=(0,0)), c, np.empty(shape=(0,0)), b, res)
+        self.print_simplex_table([i for i in range(self.constrain_num)], [i+self.constrain_num for i in range(self.var_num-self.constrain_num)], self.A, np.empty(shape=(0,0)), self.c, np.empty(shape=(0,0)), self.b, self.res)
         print("Variable Status...")
         self.print_var_status(self.var_status)
 
@@ -57,11 +58,11 @@ class Simplex_Table(object):
             if (self.var_status[i] == self.NORMAL):
                 print("x{}".format(i),end="  ")
             elif (self.var_status[i] == self.NINF):
-                print("-x{}".format(i),end="  ")
+                print("-x{}(x{})".format(i,i),end="  ")
             elif (self.var_status[i] == i):
-                print("x{}+".format(i),end="  ")
-            elif (self.var_status[i] > 0):
-                print("x{}-".format(i),end="  ")
+                print("x{}+(x{})".format(i,i),end="  ")
+            elif (self.var_status[i] >= 0):
+                print("x{}-(x{})".format(self.var_status[i],i),end="  ")
         print("\n")
 
     def print_simplex_table(self, base_list, null_list, A_b, A_n, c_b, c_n, b, res):
@@ -205,7 +206,7 @@ class Simplex_Table(object):
             print("After transforming...")
             self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
 
-            print("Judging finished simplex or not...  ",end="")
+            print("Judging finish simplex or not...  ",end="")
             end_of_simplex = self.decide_end_simplex_or_not(c_n)
             if (end_of_simplex == True): 
                     print("Finally End!")
@@ -297,9 +298,9 @@ class Simplex_Table(object):
                 solution[var_status[i]] += solution[i]
         
         #  print the final soltion list
-        for i in range(self.var_num-1):
+        for i in range(self.ori_var_num-1):
             print(solution[i],end=" ")
-        print(solution[self.var_num-1])
+        print(solution[self.ori_var_num-1])
         return
 
 
@@ -309,7 +310,7 @@ if __name__ == '__main__':
     # variable number and constrain number
     var_constrain_str = input()
     var_constrain_str_split = var_constrain_str.split()
-    if (len(var_constrain_str_split) != 2): 
+    if (len(var_constrain_str_split) != 2 or int(var_constrain_str_split[0]) <=0 or int(var_constrain_str_split[1]) <= 0): 
         raise Exception('Variable and constrain number input ERROR!')
     var_num = int(var_constrain_str_split[0])
     constrain_num = int(var_constrain_str_split[1])
