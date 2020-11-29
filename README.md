@@ -6,6 +6,9 @@ Not finished yet....
 
 Potential **BUG**:
 
-1. Target Function Solution is INF or -INF
-2. Infinite Solutions
+* Target Function Solution is INF or -INF
+
+**Next** step:
+
+* Test based on random data
 
