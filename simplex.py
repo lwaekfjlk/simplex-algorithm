@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from scipy.optimize import linprog
 
 class Simplex_Table(object):
     def __init__(self,ori_c,ori_A,ori_b,ori_res,var_type_arr,cons_type_arr):  
@@ -13,6 +14,10 @@ class Simplex_Table(object):
         self.ori_constrain_num = ori_A.shape[0]
         self.ori_var_num = ori_A.shape[1]
         self.var_status = np.full(self.ori_var_num,self.NORMAL)
+        self.var_type_arr = var_type_arr
+        self.std_c = ori_c
+        self.std_A = ori_A
+        self.std_b = ori_b 
         
         # change variable based on variable limitation
         for i in range(len(var_type_arr)):
@@ -243,9 +248,9 @@ class Simplex_Table(object):
 
         print("\nInitial point FOUND!")
         self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
-
+        print(res)
         # in the 1 stage of simplex method, we can find situation that can not find solution for simplex method
-        if(res != 0):
+        if(abs(res-0) >= 1e-10):
             self.res_type = -1
             return
         
@@ -270,16 +275,33 @@ class Simplex_Table(object):
         print("\nComplete, get final results!")
         self.print_simplex_table(self.base_list, self.null_list, self.A_b, self.A_n, self.c_b, self.c_n, self.b, self.res)
         
-        self.handle_result(self.res_type, self.base_list, self.null_list, (self.b).reshape(-1), self.res, self.var_status)
+        self.res_type, self.opt_solution, self.solution = self.handle_result(self.res_type, self.base_list, self.null_list, (self.b).reshape(-1), self.res, self.var_status)
 
-        return
+        return self.res_type, self.opt_solution, self.solution
+
+    def std_simplex_algo(self):
+        c = list(-self.std_c[0,:])
+        A = []
+        for i in range(self.A.shape[0]): 
+            A.append(list(self.std_A[i]))
+        b = list(self.std_b[:,0])
+        bound = []
+        for i in range(len(self.var_type_arr)):
+            if (self.var_type_arr[i] == 1):
+                bound.append((0, None))
+            if (self.var_type_arr[i] == -1):
+                bound.append((None, 0))
+            if (self.var_type_arr[i] == 0):
+                bound.append((None, None))
+        res = linprog(c, A_ub=A, b_ub=b, bounds=bound)
+
+        self.res_type = res.status
+        self.opt_solution = res.fun
+        self.solution = res.x
+
+        return res.status, res.fun, res.x
 
     def handle_result(self, res_type, base_list, null_list, base_solution, opt_solution, var_status):
-        # the first two lines for answers
-
-        print(res_type)
-        print(opt_solution)
-
         # construct the solution list 
         base_cnt = 0
         null_cnt = 0
@@ -295,13 +317,17 @@ class Simplex_Table(object):
             elif (var_status[i] == self.NORMAL):
                 continue
             elif (var_status[i] != i):
-                solution[var_status[i]] += solution[i]
-        
-        #  print the final soltion list
-        for i in range(self.ori_var_num-1):
-            print(solution[i],end=" ")
-        print(solution[self.ori_var_num-1])
-        return
+                solution[var_status[i]] -= solution[i]
+        solution = solution[:self.ori_var_num]
+        return res_type, opt_solution, solution
+    
+    def print_result(self):
+        print(self.res_type)
+        print(self.opt_solution)
+        for i in range(len(self.solution)-1):
+            print(self.solution[i],end=" ")
+        print(self.solution[len(self.solution)-1])
+    
 
 
 if __name__ == '__main__':
@@ -374,6 +400,9 @@ if __name__ == '__main__':
     '''
 
     simplex = Simplex_Table(c,A,b,res,var_constrain_arr,constrain_equality)
-    simplex.simplex_algo()
+    res_type, opt_solution, solution = simplex.simplex_algo()
+    simplex.print_result()
+    res_type, opt_solution, solution = simplex.std_simplex_algo()
+    simplex.print_result()
 
 
