@@ -3,18 +3,20 @@ import random
 from scipy.optimize import linprog
 
 class Simplex_Table(object):
-    def __init__(self,ori_c,ori_A,ori_b,ori_res,var_type_arr,cons_type_arr):  
+    def __init__(self,ori_c,ori_A,ori_b,ori_res,var_type_arr,cons_type_arr,debug=False):  
         # constant variable used by var_status
         # NORMAL state means normal variable x
         # NINF   state means the x actually is replaced by (-x)
         # POS    state means the variable is a pair with another variable x+ and x- separated from x in R
+        self.debug = debug
         self.NINF = -1000000
         self.INF  =  1000000
         self.NORMAL = -1
         self.ori_constrain_num = ori_A.shape[0]
         self.ori_var_num = ori_A.shape[1]
-        self.var_status = np.full(self.ori_var_num,self.NORMAL)
         self.var_type_arr = var_type_arr
+        self.cons_type_arr = cons_type_arr
+        self.var_status = np.full(self.ori_var_num,self.NORMAL)
         self.std_c = ori_c
         self.std_A = ori_A
         self.std_b = ori_b 
@@ -52,79 +54,82 @@ class Simplex_Table(object):
         self.res_type = 1
         self.constrain_num = (self.A).shape[0]
         self.var_num = (self.A).shape[1]
-
-        print("\nSimplex Table Init...")
-        self.print_simplex_table([i for i in range(self.constrain_num)], [i+self.constrain_num for i in range(self.var_num-self.constrain_num)], self.A, np.empty(shape=(0,0)), self.c, np.empty(shape=(0,0)), self.b, self.res)
-        print("Variable Status...")
-        self.print_var_status(self.var_status)
+        
+        if (self.debug == True):
+            print("\nSimplex Table Init...")
+            self.print_simplex_table([i for i in range(self.constrain_num)], [i+self.constrain_num for i in range(self.var_num-self.constrain_num)], self.A, np.empty(shape=(0,0)), self.c, np.empty(shape=(0,0)), self.b, self.res)
+            print("Variable Status...")
+            self.print_var_status(self.var_status)
 
     def print_var_status(self, var_status):
-        for i in range(len(self.var_status)):
-            if (self.var_status[i] == self.NORMAL):
-                print("x{}".format(i),end="  ")
-            elif (self.var_status[i] == self.NINF):
-                print("-x{}(x{})".format(i,i),end="  ")
-            elif (self.var_status[i] == i):
-                print("x{}+(x{})".format(i,i),end="  ")
-            elif (self.var_status[i] >= 0):
-                print("x{}-(x{})".format(self.var_status[i],i),end="  ")
-        print("\n")
+        if (self.debug == True):
+            for i in range(len(self.var_status)):
+                if (self.var_status[i] == self.NORMAL):
+                    print("x{}".format(i),end="  ")
+                elif (self.var_status[i] == self.NINF):
+                    print("-x{}(x{})".format(i,i),end="  ")
+                elif (self.var_status[i] == i):
+                    print("x{}+(x{})".format(i,i),end="  ")
+                elif (self.var_status[i] >= 0):
+                    print("x{}-(x{})".format(self.var_status[i],i),end="  ")
+            print("\n")
 
     def print_simplex_table(self, base_list, null_list, A_b, A_n, c_b, c_n, b, res):
-        # ===============
-        print("+",end='')
-        for i in range(len(base_list+null_list)+1):
-            print("------",end='')
-        print("+",end='')
-        print("\n",end='')
+        if (self.debug == True):
+            # ===============
+            print("+",end='')
+            for i in range(len(base_list+null_list)+1):
+                print("------",end='')
+            print("+",end='')
+            print("\n",end='')
 
-        # base number
-        print("|",end="")
-        for i in range(len(base_list)):
-            print("%5d"%base_list[i],end=" ")
-        for i in range(len(null_list)):
-            print("%5d"%null_list[i],end=" ")
-        print("      |\n",end="")
-
-        # ===============
-        print("+",end='')
-        for i in range(len(base_list+null_list)+1):
-            print("------",end='')
-        print("+",end='')
-        print("\n",end='')
-        
-        # c arr line
-        print("|",end="")
-        for i in range(c_b.shape[1]):
-            print("%5.2f"%c_b[0][i],end=" ")
-        for i in range(c_n.shape[1]):
-            print("%5.2f"%c_n[0][i],end=" ")
-        print("|%5.2f"%res,end="")
-        print("|\n",end="")
-
-        # ===============
-        print("+",end='')
-        for i in range(len(base_list+null_list)+1):
-            print("------",end='')
-        print("+",end='')
-        print("\n",end='')
-
-        # A | b  matrix
-        for i in range(self.constrain_num):
+            # base number
             print("|",end="")
-            for j in range(A_b.shape[1]):
-                print("%5.2f"%A_b[i][j],end=" ")
-            for j in range(A_n.shape[1]):
-                print("%5.2f"%A_n[i][j],end=" ")
-            print("|%5.2f"%b[i],end="")
+            for i in range(len(base_list)):
+                print("%5d"%base_list[i],end=" ")
+            for i in range(len(null_list)):
+                print("%5d"%null_list[i],end=" ")
+            print("      |\n",end="")
+
+            # ===============
+            print("+",end='')
+            for i in range(len(base_list+null_list)+1):
+                print("------",end='')
+            print("+",end='')
+            print("\n",end='')
+            
+            # c arr line
+            print("|",end="")
+            for i in range(c_b.shape[1]):
+                print("%5.2f"%c_b[0][i],end=" ")
+            for i in range(c_n.shape[1]):
+                print("%5.2f"%c_n[0][i],end=" ")
+            print("|%5.2f"%res,end="")
             print("|\n",end="")
-        
-        # ===============
-        print("+",end='')
-        for i in range(len(base_list+null_list)+1):
-            print("------",end='')
-        print("+",end='')
-        print("\n",end='')        
+
+            # ===============
+            print("+",end='')
+            for i in range(len(base_list+null_list)+1):
+                print("------",end='')
+            print("+",end='')
+            print("\n",end='')
+
+            # A | b  matrix
+            for i in range(self.constrain_num):
+                print("|",end="")
+                for j in range(A_b.shape[1]):
+                    print("%5.2f"%A_b[i][j],end=" ")
+                for j in range(A_n.shape[1]):
+                    print("%5.2f"%A_n[i][j],end=" ")
+                print("|%5.2f"%b[i],end="")
+                print("|\n",end="")
+            
+            # ===============
+            print("+",end='')
+            for i in range(len(base_list+null_list)+1):
+                print("------",end='')
+            print("+",end='')
+            print("\n",end='')        
 
     def split_matrix(self,mat,lista, listb):
         return mat[:,lista], mat[:,listb]
@@ -183,7 +188,8 @@ class Simplex_Table(object):
     def change_base(self, base_list, null_list, A_b, A_n, c_b, c_n, b):
         in_index  = self.find_in_index(c_n, null_list)
         out_index = self.find_out_index(A_n, b, in_index, null_list, base_list)
-        print("IN={}, OUT={}".format(in_index, out_index))
+        if (self.debug == True):
+            print("IN={}, OUT={}".format(in_index, out_index))
 
         # find index in the list
         in_index_pos_in_null_list = null_list.index(in_index)
@@ -208,18 +214,21 @@ class Simplex_Table(object):
     def simplex_loop(self,base_list, null_list, A_b, A_n, c_b, c_n, b, res):
         while (1):
             A_b, A_n, c_b, c_n, b, res = self.transform(A_b, A_n, c_b, c_n, b, res)
-            print("After transforming...")
+            if (self.debug == True):
+                print("After transforming...")
             self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
-
-            print("Judging finish simplex or not...  ",end="")
+            if (self.debug == True):
+                print("Judging finish simplex or not...  ",end="")
             end_of_simplex = self.decide_end_simplex_or_not(c_n)
             if (end_of_simplex == True): 
+                if (self.debug == True):
                     print("Finally End!")
-                    break
+                break
             else:
-                print("Keep Going!")
-
-            print("Changing base...  ",end="")
+                if (self.debug == True):
+                    print("Keep Going!")
+            if (self.debug == True):
+                print("Changing base...  ",end="")
             base_list, null_list, A_b, A_n, c_b, c_n = self.change_base(base_list, null_list, A_b, A_n, c_b, c_n, b)
             self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
         
@@ -243,12 +252,14 @@ class Simplex_Table(object):
         b   = self.b.copy()   
         res = 0
 
-        print("\n======1st Stage for Simplex Method======")
+        if (self.debug == True):
+            print("\n======1st Stage for Simplex Method======")
         base_list, null_list, A_b, A_n, c_b, c_n, b, res = self.simplex_loop(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
 
-        print("\nInitial point FOUND!")
+        if (self.debug == True):
+            print("\nInitial point FOUND!")
         self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
-        print(res)
+
         # in the 1 stage of simplex method, we can find situation that can not find solution for simplex method
         if(abs(res-0) >= 1e-10):
             self.res_type = -1
@@ -262,7 +273,8 @@ class Simplex_Table(object):
         self.A_b, self.A_n  = self.split_matrix(self.A, self.base_list, self.null_list)
         self.c_b, self.c_n  = self.split_matrix(self.c, self.base_list, self.null_list)
         
-        print("\n======2nd Stage for Simplex Method======")
+        if (self.debug == True):
+            print("\n======2nd Stage for Simplex Method======")
         self.print_simplex_table(self.base_list, self.null_list, self.A_b, self.A_n, self.c_b, self.c_n, self.b, self.res)
 
         if (len(self.null_list) > 0):
@@ -272,7 +284,8 @@ class Simplex_Table(object):
             self.res = self.res - float(np.dot(np.dot(self.c_b, self.inv_matrix(self.A_b)) , self.b))
             self.b = np.dot(self.inv_matrix(self.A_b), self.b)
 
-        print("\nComplete, get final results!")
+        if (self.debug == True):
+            print("\nComplete, get final results!")
         self.print_simplex_table(self.base_list, self.null_list, self.A_b, self.A_n, self.c_b, self.c_n, self.b, self.res)
         
         self.res_type, self.opt_solution, self.solution = self.handle_result(self.res_type, self.base_list, self.null_list, (self.b).reshape(-1), self.res, self.var_status)
@@ -281,10 +294,17 @@ class Simplex_Table(object):
 
     def std_simplex_algo(self):
         c = list(-self.std_c[0,:])
-        A = []
+        A_ub = []
+        A_eq = []
+        b_ub = []
+        b_eq = []
         for i in range(self.A.shape[0]): 
-            A.append(list(self.std_A[i]))
-        b = list(self.std_b[:,0])
+            if (self.cons_type_arr[i] == -1):
+                A_ub.append(list(self.std_A[i]))
+                b_ub.append(self.std_b[i][0])
+            if (self.cons_type_arr[i] == 0):
+                A_eq.append(list(self.std_A[i]))
+                b_eq.append(self.std_b[i][0])
         bound = []
         for i in range(len(self.var_type_arr)):
             if (self.var_type_arr[i] == 1):
@@ -293,7 +313,12 @@ class Simplex_Table(object):
                 bound.append((None, 0))
             if (self.var_type_arr[i] == 0):
                 bound.append((None, None))
-        res = linprog(c, A_ub=A, b_ub=b, bounds=bound)
+        if (A_ub == []):
+            res = linprog(c, A_ub=None, b_ub=None, A_eq=A_eq, b_eq=b_eq, bounds=bound)
+        elif (A_eq == []):
+            res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=None, b_eq=None, bounds=bound)
+        else:
+            res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bound)
 
         self.res_type = res.status
         self.opt_solution = res.fun
@@ -399,7 +424,7 @@ if __name__ == '__main__':
     print("standard constrain matrix for b = {}".format(b))
     '''
 
-    simplex = Simplex_Table(c,A,b,res,var_constrain_arr,constrain_equality)
+    simplex = Simplex_Table(c,A,b,res,var_constrain_arr,constrain_equality,debug=False)
     res_type, opt_solution, solution = simplex.simplex_algo()
     simplex.print_result()
     res_type, opt_solution, solution = simplex.std_simplex_algo()
