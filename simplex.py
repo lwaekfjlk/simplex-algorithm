@@ -51,7 +51,7 @@ class Simplex_Table(object):
         self.A = ori_A
         self.b = ori_b
         self.res = ori_res
-        self.res_type = 1
+        self.res_type = 0
         self.constrain_num = (self.A).shape[0]
         self.var_num = (self.A).shape[1]
         
@@ -159,10 +159,10 @@ class Simplex_Table(object):
         find_inf_solution_res  =  self.find_inf_solution(A, c, A.shape[0])
         find_A_not_full_row_rank_res = self.find_A_not_full_row_rank(A, A.shape[0])
         if (find_inf_solution_res == True):
-            return 0
+            return 2
         if (find_A_not_full_row_rank_res == True):
-            return -1
-        return 1
+            return 2
+        return 0
 
     def decide_end_simplex_or_not(self, c_n):
         return True if (np.max(c_n)<=0) else False
@@ -239,7 +239,7 @@ class Simplex_Table(object):
         # construct the initial simplex table
         # error check
         self.res_type = self.have_special_situation(self.A, self.c)
-        if (self.res_type != 1):
+        if (self.res_type != 0):
             return
         
         # 1st stage for 2 stage simplex method
@@ -262,8 +262,8 @@ class Simplex_Table(object):
 
         # in the 1 stage of simplex method, we can find situation that can not find solution for simplex method
         if(abs(res-0) >= 1e-10):
-            self.res_type = -1
-            return
+            self.res_type = 2
+            return self.res_type, 0, []
         
         self.null_list = [i for i in null_list if i < self.var_num]
         self.base_list = [i for i in base_list if i < self.var_num]
@@ -314,11 +314,11 @@ class Simplex_Table(object):
             if (self.var_type_arr[i] == 0):
                 bound.append((None, None))
         if (A_ub == []):
-            res = linprog(c, A_ub=None, b_ub=None, A_eq=A_eq, b_eq=b_eq, bounds=bound)
+            res = linprog(c, A_ub=None, b_ub=None, A_eq=A_eq, b_eq=b_eq, bounds=bound, method='simplex')
         elif (A_eq == []):
-            res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=None, b_eq=None, bounds=bound)
+            res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=None, b_eq=None, bounds=bound, method='simplex')
         else:
-            res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bound)
+            res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bound, method='simplex')
 
         self.res_type = res.status
         self.opt_solution = res.fun
@@ -347,11 +347,20 @@ class Simplex_Table(object):
         return res_type, opt_solution, solution
     
     def print_result(self):
-        print(self.res_type)
-        print(self.opt_solution)
-        for i in range(len(self.solution)-1):
-            print(self.solution[i],end=" ")
-        print(self.solution[len(self.solution)-1])
+        if (self.res_type == 0):
+            print(1)
+            print(self.opt_solution)
+            for i in range(len(self.solution)-1):
+                print(self.solution[i],end=" ")
+            print(self.solution[len(self.solution)-1])
+        elif (self.res_type == 2):
+            print(-1)
+        elif (self.res_type == 3):
+            print(1)
+        elif (self.res_type == 1):
+            print('Iteration limit reached.')
+        elif (self.res_type == 4):
+            print('Numerical difficulties encountered.')
     
 
 
