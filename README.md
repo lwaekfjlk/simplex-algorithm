@@ -2,13 +2,11 @@
 
 This is the project for AOR in Zhejiang University.
 
-Not finished yet....
+- [x] Simplex Algorithm
+  - [x] required input-output form
+  - [x] use random data and compare with standard API in order to verify the correcteness of self-built API 
+- [ ] Dual-simplex Algorithm
+- [ ] Report
 
-Potential **BUG**:
 
-* Target Function Solution is INF or -INF
-
-**Next** step:
-
-* Test based on random data
 
