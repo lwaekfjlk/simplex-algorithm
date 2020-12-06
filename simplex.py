@@ -48,7 +48,7 @@ class Simplex_Table(object):
             if (var_type_arr[i] == 0):
                 col_A = np.array(-ori_A[:,i]).reshape(-1,1)
                 col_c = np.array(-ori_c[:,i]).reshape(-1,1)
-                ori_A = np.concatenate((ori_A, col_A),axis=1).reshape(constrain_num,-1)
+                ori_A = np.concatenate((ori_A, col_A),axis=1).reshape(self.ori_constrain_num,-1)
                 ori_c = np.concatenate((ori_c, col_c),axis=1).reshape(1,-1)
 
                 self.var_status[i] = i
@@ -65,7 +65,7 @@ class Simplex_Table(object):
                 col_A       = np.zeros(shape=(self.ori_constrain_num,1))
                 col_A[i][0] = 1
                 col_c       = np.zeros(shape=(1,1))  
-                ori_A       = np.concatenate((ori_A,col_A), axis=1).reshape(constrain_num,-1)
+                ori_A       = np.concatenate((ori_A,col_A), axis=1).reshape(self.ori_constrain_num,-1)
                 ori_c       = np.concatenate((ori_c,col_c), axis=1).reshape(1,-1)
 
                 self.var_status = np.append(self.var_status, self.NORMAL)
@@ -81,7 +81,7 @@ class Simplex_Table(object):
                 col_A       = np.zeros(shape=(self.ori_constrain_num,1))
                 col_A[i][0] = 1
                 col_c       = np.zeros(shape=(1,1))    
-                ori_A       = np.concatenate((ori_A,col_A), axis=1).reshape(constrain_num,-1)
+                ori_A       = np.concatenate((ori_A,col_A), axis=1).reshape(self.ori_constrain_num,-1)
                 ori_c       = np.concatenate((ori_c,col_c), axis=1).reshape(1,-1)
 
                 self.var_status = np.append(self.var_status, self.NORMAL)
@@ -103,7 +103,7 @@ class Simplex_Table(object):
         self.res_type      = 1
         self.constrain_num = (self.A).shape[0]
         self.var_num       = (self.A).shape[1]
-        
+
         """ standard simplex form
             1. vars all >=0 type
             2. cons all ==  type
@@ -512,7 +512,7 @@ class Simplex_Table(object):
 if __name__ == '__main__':
     
     """ control program mode """
-    test = False
+    test = True
 
     if (test == False):
 
@@ -580,7 +580,7 @@ if __name__ == '__main__':
 
         var_constrain_arr = [int(i) for i in var_constrain_str_split]
         
-        simplex = Simplex_Table(c,A,b,res,var_constrain_arr,constrain_equality,debug=False)
+        simplex = Simplex_Table(c,A,b,res,var_constrain_arr,constrain_equality,debug=True)
         res_type, opt_solution, solution = simplex.simplex_algo()
         simplex.print_result()
         res_type, opt_solution, solution = simplex.std_simplex_algo()
@@ -593,8 +593,8 @@ if __name__ == '__main__':
             use both std and self-build simplex-algo
             check error within 1e-5
         """
-        constrain_num = 20
-        variable_num = 30
+        constrain_num = 4
+        variable_num = 5
 
 
         iter_num = 0
