@@ -104,6 +104,7 @@ class Simplex_Table(object):
         self.constrain_num = (self.A).shape[0]
         self.var_num       = (self.A).shape[1]
 
+      
         """ standard simplex form
             1. vars all >=0 type
             2. cons all ==  type
@@ -156,8 +157,10 @@ class Simplex_Table(object):
                 if (self.debug == True): print("Judging finish simplex or not... Keep Going!")
             
             # change base
-            base_list, null_list, A_b, A_n, c_b, c_n, in_index_col_have_pos, in_index, out_index = self.change_base(base_list, null_list, A_b, A_n, c_b, c_n, b)
-            if (self.debug == True): self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
+            base_list, null_list, A_b, A_n, c_b, c_n, in_index_col_have_pos, in_index, out_index\
+                 = self.change_base(base_list, null_list, A_b, A_n, c_b, c_n, b)
+            if (self.debug == True): 
+                self.print_simplex_table(base_list, null_list, A_b, A_n, c_b, c_n, b, res)
 
             # detect situations like a1-->a2  a2--->a1 a1--->a2 ...
             if (prev_in_index == out_index and prev_out_index == in_index):
@@ -217,6 +220,7 @@ class Simplex_Table(object):
         if (len(self.base_list) < self.constrain_num):
             self.base_list += self.null_list[-(self.constrain_num - len(self.base_list)):]
             self.null_list  = self.null_list[:-(self.constrain_num - len(self.base_list))]
+
         self.A_b, self.A_n  = self.split_matrix(self.A, self.base_list, self.null_list)
         self.c_b, self.c_n  = self.split_matrix(self.c, self.base_list, self.null_list)
         
@@ -302,11 +306,17 @@ class Simplex_Table(object):
 
 
     def find_in_index(self, c_n, null_list):
+        print(">>>c_n ",c_n,end = "\n")
+        print(">>>max ",np.argmax(c_n),end = "\n")
+        print(">>>null_list ",null_list,end = "\n")
+        print(">>>null_list[max] ",null_list[np.argmax(c_n)],end = "\n")
         return null_list[np.argmax(c_n)]
 
 
     def find_out_index(self, A_n, b, in_index, null_list,base_list):
         in_index_pos_in_null_list = null_list.index(in_index)
+        print(">>>in_index",in_index_pos_in_null_list,end="\n")
+        print(">>>A_n",A_n,end="\n")
         A_n_in_index_col          = A_n[:,in_index_pos_in_null_list].reshape(-1,1)
         A_n_in_index_col_copy     = A_n_in_index_col.copy()
 
@@ -314,8 +324,15 @@ class Simplex_Table(object):
         """
         # since we might come across divide zero exception, we change all 0 in the np array into -1
         # we would not choose ai,j = 0 or -1, so changes make no effect
+        
+        print(">>>b",b,end="\n")
+
         A_n_in_index_col_copy[A_n_in_index_col_copy == 0] = -1
         div_mat = b / A_n_in_index_col_copy
+        
+        print(">>>div mat",div_mat,end="\n")
+        print(">>>np.argmin()",np.argmin(div_mat),end="\n")
+        print(">>>A_n_in_index_col_copy",A_n_in_index_col_copy,end="\n")
 
         # if the min element in div_mat is negative
         # we replace min element to be self.INF and continue indexing argmin 
@@ -367,6 +384,7 @@ class Simplex_Table(object):
 
 
     def inv_matrix(self,mat):
+        print(">>>mat",mat,end="\n")
         return np.linalg.inv(mat)
 
 
@@ -394,6 +412,9 @@ class Simplex_Table(object):
 
 
     def print_simplex_table(self, base_list, null_list, A_b, A_n, c_b, c_n, b, res):
+        print("base list",base_list,end = "\n")
+        print("null list",null_list,end = "\n")
+
         # ===============
         print("+",end='')
         for i in range(len(base_list+null_list)+1):
@@ -486,8 +507,10 @@ class Simplex_Table(object):
 
     def decide_end_simplex_or_not(self, c_n, b):
         # not 0 but -1e-5 ~ 1e-5
-        # c_n might be empty, simplex shoulde be ended in one step
+        # c_n might be empty, simplex should be ended in one step
+        print("c_n",c_n.shape,end="\n")
         if (c_n.shape == (1,0)):
+            print("c_n.shape",end="\n")
             return True
         else:
             return True if ((np.max(c_n)<=1e-5 and np.min(b) >=-1e-5)) else False
@@ -512,7 +535,7 @@ class Simplex_Table(object):
 if __name__ == '__main__':
     
     """ control program mode """
-    test = True
+    test = False
 
     if (test == False):
 
